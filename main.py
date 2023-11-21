@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from settings import *
 from random import randint
+from sys import exit
 
 class Game(ctk.CTk):
     def __init__(self):
@@ -24,23 +25,34 @@ class Game(ctk.CTk):
 
         self.mainloop()
 
-    def get_input(self, event):
-        match event.keycode:
-            case 37: self.direction = DIRECTIONS["left"]
-            case 38: self.direction = DIRECTIONS["up"]
-            case 39: self.direction = DIRECTIONS["right"]
-            case 40: self.direction = DIRECTIONS["down"]
-        print(self.direction)
-
     def animate(self):
         new_head = (self.snake[0][0] + self.direction[0], self.snake[0][1] + self.direction[1])
         self.snake.insert(0, new_head)
 
-        self.snake.pop()
+        if self.snake[0] == self.apple_pos:
+            self.place_apple()
+        else:
+            self.snake.pop()
+
+        self.check_game_over()
 
         self.draw()
-
         self.after(250, self.animate)
+
+
+    def check_game_over(self):
+        snake_head = self.snake[0]
+        if snake_head[0] >= RIGHT_LIMIT or snake_head[1] >= BOTTOM_LIMIT or \
+            snake_head[0] < LEFT_LIMIT or snake_head[1] < TOP_LIMIT or \
+            snake_head in self.snake[1:]:
+            exit()
+
+    def get_input(self, event):
+        match event.keycode:
+            case 37: self.direction = DIRECTIONS["left"] if self.direction != DIRECTIONS["right"] else self.direction
+            case 38: self.direction = DIRECTIONS["up"] if self.direction != DIRECTIONS["down"] else self.direction
+            case 39: self.direction = DIRECTIONS["right"] if self.direction != DIRECTIONS["left"] else self.direction
+            case 40: self.direction = DIRECTIONS["down"] if self.direction != DIRECTIONS["up"] else self.direction
 
     def place_apple(self):
         self.apple_pos = (randint(0, FIELDS[0]-1),randint(0,FIELDS[1]-1))
@@ -50,7 +62,6 @@ class Game(ctk.CTk):
             for frame, pos in self.draw_frames:
                 frame.grid_forget()
             self.draw_frames.clear()
-
 
         apple_frame = ctk.CTkFrame(self, fg_color=APPLE_COLOR)
         self.draw_frames.append((apple_frame, self.apple_pos))
